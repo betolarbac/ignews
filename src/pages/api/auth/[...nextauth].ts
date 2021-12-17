@@ -26,10 +26,27 @@ export default NextAuth({
 
             try {
                 await fauna.query(
-                    q.Create(
-                        q.Collection('users'),
-                        {data: { email } }
+                  //verificar se um usuario existe no faunadb 
+                   q.If(
+                     q.Not(
+                       q.Exists(
+                        q.Match(
+                          q.Index('user_by_email'),
+                          q.Casefold(user.email)
+                        )
+                       )
+                     ), //se não existir criar um novo
+                     q.Create(
+                      q.Collection('users'),
+                      {data: { email } }
+                  ),//se existir pegar o usuario e validar 
+                  q.Get(
+                    q.Match(
+                      q.Index('user_by_email'),
+                      q.Casefold(user.email)
                     )
+                  )
+                   )
                 )
                 return true
             } catch {
